@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 database = input("Ingrese si el nuevo empleado será líder o empleado (L), (E), o (NA): ").strip().upper()
 
 if database == "L":
-    data = pd.read_csv('./data/data_leaders.csv')
+    data = pd.read_csv('../data/data_leaders.csv')
 elif database == "E":
-    data = pd.read_csv('./data/data_no_leaders.csv')
+    data = pd.read_csv('../data/data_no_leaders.csv')
 elif database == "NA":
-    data = pd.read_csv('./data/data_global_clean.csv')
+    data = pd.read_csv('../data/data_global_clean.csv')
 else:
     print("Entrada inválida. Se usará data_global_clean.csv por defecto.")
-    data = pd.read_csv('./data/data_global_clean.csv')
+    data = pd.read_csv('../data/data_global_clean.csv')
     
 """def pedir_location(df):
     locations = sorted(df["Location"].dropna().unique())
