@@ -256,7 +256,8 @@ def filter_section():
     
     # Cargar datos si no están cargados o si cambió el tipo
     if (st.session_state.analyzer is None or 
-        st.session_state.analyzer.database_type != db_type):
+        st.session_state.analyzer.database_type != db_type or
+        st.session_state.analyzer.original_data is None):
         with st.spinner("Cargando datos..."):
             analyzer = MarkovChainAnalyzer(database_type=db_type)
             analyzer.load_data()
@@ -392,7 +393,11 @@ def run_analysis():
     
     # Crear nueva instancia para el análisis
     analysis_analyzer = MarkovChainAnalyzer(database_type=analyzer.database_type)
-    analysis_analyzer.data = analyzer.original_data.copy()
+    
+    # Usar SIEMPRE los datos originales como base
+    base_data = analyzer.original_data.copy()
+    analysis_analyzer.data = base_data
+    analysis_analyzer.original_data = base_data   # <-- ESTA LÍNEA ES LA CLAVE
     
     with st.spinner("Ejecutando análisis de cadena de Markov..."):
         try:
