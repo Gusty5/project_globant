@@ -159,17 +159,28 @@ class MarkovChainAnalyzer:
             s_next = self.state_to_idx[float(states[i + 1])]
             transition_counts[s_current, s_next] += 1
         
-        # Normalizar (convertir a probabilidades)
-        # Evitar división por cero
+        # ------------------ FIX IMPORTANTE ------------------
+        # Evitar filas sin transiciones salientes (que luego rompen np.random.choice)
         row_sums = transition_counts.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1  # Para evitar NaN
+        zero_rows = (row_sums == 0).flatten()
         
+        if np.any(zero_rows):
+            # Hacemos esos estados absorbentes: si alguna vez caes ahí, te quedas
+            for i, is_zero in enumerate(zero_rows):
+                if is_zero:
+                    transition_counts[i, i] = 1
+            
+            # Recalcular sumas tras el ajuste
+            row_sums = transition_counts.sum(axis=1, keepdims=True)
+        # ---------------------------------------------------
+        
+        # Normalizar (convertir a probabilidades)
         self.transition_matrix = transition_counts / row_sums
         
         print(f"\n✅ Matriz de transición construida ({n_states}x{n_states})")
         
         return self.transition_matrix
-    
+
     def is_irreducible(self):
         """
         Verifica si la cadena de Markov es irreducible
@@ -281,29 +292,90 @@ class MarkovChainAnalyzer:
     def compute_mean_recurrence_times(self, pi):
         """
         Calcula los tiempos medios de recurrencia
-        
+
         Args:
             pi: Distribución estacionaria
-            
+
         Returns:
             Array con tiempos medios de recurrencia
         """
         mean_times = 1 / pi
-        
+
         print(f"\n⏱️  Tiempos medios de recurrencia:")
         for state, time in zip(self.unique_states, mean_times):
-            print(f"   Estado {state}: {time:.2f} pasos")
-        
+            print(f"   Estado {state}: {time:.2f} días")
+
+        return mean_times
+
+    def estimate_recurrence_by_simulation(self, state_idx, n_sim=50000):
+        """
+        Estima el tiempo medio de recurrencia mediante simulación Monte Carlo
+
+        Args:
+            state_idx: Índice del estado inicial
+            n_sim: Número de días a simular
+
+        Returns:
+            Tiempo medio de recurrencia estimado (np.inf si nunca regresa)
+        """
+        estado = state_idx
+        visitas = []
+        ultima_visita = None
+
+        for paso in range(n_sim):
+            # Obtener probabilidades de transición
+            probs = self.transition_matrix[estado]
+
+            # Elegir siguiente estado
+            estado = np.random.choice(len(self.transition_matrix), p=probs)
+
+            # Si regresamos al estado inicial
+            if estado == state_idx:
+                if ultima_visita is not None:
+                    visitas.append(paso - ultima_visita)
+                ultima_visita = paso
+
+        # Si nunca regresó, es transitorio o recurrente nulo
+        if len(visitas) == 0:
+            return np.inf
+
+        return np.mean(visitas)
+
+    def estimate_all_recurrence_times(self, n_sim=50000):
+        """
+        Estima los tiempos medios de recurrencia para todos los estados
+        mediante simulación Monte Carlo
+
+        Args:
+            n_sim: Número de días a simular por estado
+
+        Returns:
+            Array con tiempos medios de recurrencia estimados
+        """
+        n_states = len(self.unique_states)
+        mean_times = np.zeros(n_states)
+
+        print(f"\n⏱️  Estimando tiempos de recurrencia por simulación ({n_sim:,} días)...")
+
+        for i in range(n_states):
+            mean_times[i] = self.estimate_recurrence_by_simulation(i, n_sim=n_sim)
+            state_value = self.unique_states[i]
+
+            if np.isinf(mean_times[i]):
+                print(f"   Estado {state_value}: ∞ (transitorio o no alcanzable)")
+            else:
+                print(f"   Estado {state_value}: {mean_times[i]:.2f} días")
+
         return mean_times
     
     def simulate(self, initial_state, n_steps=60):
         """
         Simula la cadena de Markov
-        
+
         Args:
             initial_state: Estado inicial
-            n_steps: Número de pasos a simular
-            
+            n_steps: Número de días a simular
+
         Returns:
             Lista de estados simulados
         """
@@ -322,16 +394,27 @@ class MarkovChainAnalyzer:
         
         for _ in range(n_steps):
             current_idx = self.state_to_idx[current_state]
-            next_state = np.random.choice(
-                self.unique_states, 
-                p=self.transition_matrix[current_idx]
-            )
+            probs = self.transition_matrix[current_idx]
+            
+            total_p = probs.sum()
+            if total_p <= 0:
+                # Caso extremo: fila sin probabilidades (no debería pasar tras el fix,
+                # pero lo manejamos por seguridad). Mantenemos estado absorbente.
+                simulated_states.extend([current_state] * (n_steps - len(simulated_states) + 1))
+                break
+            
+            # Normalizar por si hay pequeños errores numéricos
+            probs = probs / total_p
+            
+            next_state = np.random.choice(self.unique_states, p=probs)
+            
             # Convertir a float para consistencia
             next_state = float(next_state)
             simulated_states.append(next_state)
             current_state = next_state
         
         return simulated_states
+
     
     def plot_transition_matrix(self, figsize=(10, 8)):
         """
@@ -344,9 +427,9 @@ class MarkovChainAnalyzer:
         n_states = len(self.unique_states)
         plt.xticks(ticks=np.arange(n_states), labels=self.unique_states, rotation=45)
         plt.yticks(ticks=np.arange(n_states), labels=self.unique_states)
-        plt.xlabel('Next State')
-        plt.ylabel('Current State')
-        plt.title('Markov Chain Transition Matrix')
+        plt.xlabel('Estado siguiente', fontsize=12, color='#333333')
+        plt.ylabel('Estado actual', fontsize=12, color='#333333')
+        plt.title('Matriz de transición de engagement', fontsize=14, fontweight='bold', color='#333333')
         
         # Añadir valores numéricos
         for i in range(n_states):
@@ -366,9 +449,9 @@ class MarkovChainAnalyzer:
         """
         plt.figure(figsize=figsize)
         plt.plot(simulated_states, marker='o')
-        plt.xlabel('Step')
-        plt.ylabel('Engagement Level')
-        plt.title('Simulated Engagement Levels using Markov Chain')
+        plt.xlabel('Día', fontsize=12, color='#333333')
+        plt.ylabel('Nivel de engagement', fontsize=12, color='#333333')
+        plt.title('Niveles de engagement simulados', fontsize=14, fontweight='bold', color='#333333')
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.show()
@@ -390,6 +473,20 @@ class MarkovChainAnalyzer:
         if filters:
             self.apply_filters(filters)
         
+        # Validar que hay datos suficientes
+        if len(self.data) < 2:
+            print(f"⚠️ Datos insuficientes: solo hay {len(self.data)} registros")
+            print("   Se necesitan al menos 2 registros para construir transiciones")
+            # Retornar resultados vacíos en lugar de hacer raise
+            return {
+                'transition_matrix': None,
+                'states': [],
+                'irreducible': False,
+                'aperiodic': False,
+                'ergodic': False,
+                'error': 'Datos insuficientes'
+            }
+        
         # 2. Preprocesar engagement
         self.preprocess_engagement()
         
@@ -408,10 +505,17 @@ class MarkovChainAnalyzer:
         if results['ergodic']:
             pi = self.compute_stationary_distribution()
             results['stationary_distribution'] = pi
-            
+
             if pi is not None:
                 mean_times = self.compute_mean_recurrence_times(pi)
                 results['mean_recurrence_times'] = mean_times
+                results['recurrence_method'] = 'analytical'
+        else:
+            # Para cadenas no ergódicas, estimar por simulación
+            print("\n📊 La cadena no es ergódica. Estimando tiempos de recurrencia por simulación...")
+            estimated_times = self.estimate_all_recurrence_times(n_sim=50000)
+            results['mean_recurrence_times'] = estimated_times
+            results['recurrence_method'] = 'simulation'
         
         # 6. Visualización
         if visualize:

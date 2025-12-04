@@ -292,14 +292,24 @@ def run_example_1():
     st.info("Se analizan todos los datos disponibles sin aplicar filtros.")
 
     with st.spinner("Cargando datos y ejecutando análisis..."):
-        analyzer = MarkovChainAnalyzer(database_type="NA")
-        analyzer.load_data()
-        results = analyzer.run_complete_analysis(filters=None, visualize=False)
+        try:
+            analyzer = MarkovChainAnalyzer(database_type="NA")
+            analyzer.load_data()
+            
+            if len(analyzer.data) < 2:
+                st.error("❌ No hay suficientes datos para realizar el análisis.")
+                return
+            
+            results = analyzer.run_complete_analysis(filters=None, visualize=False)
 
-        st.session_state.analyzer = analyzer
-        st.session_state.results = results
-
-    st.success("Análisis completado.")
+            st.session_state.analyzer = analyzer
+            st.session_state.results = results
+            st.success("✅ Análisis completado.")
+            
+        except Exception as e:
+            st.error(f"❌ Error en el análisis: {str(e)}")
+            st.session_state.results = None
+            st.session_state.analyzer = None
 
 
 def run_example_2():
@@ -308,20 +318,30 @@ def run_example_2():
     st.info("Se filtra por ubicación: MX/CDMX/CDMX y MX/JALISCO/GDL.")
 
     with st.spinner("Cargando datos y ejecutando análisis..."):
-        analyzer = MarkovChainAnalyzer(database_type="NA")
-        analyzer.load_data()
+        try:
+            analyzer = MarkovChainAnalyzer(database_type="NA")
+            analyzer.load_data()
 
-        filters = {
-            'Location': ['MX/CDMX/CDMX', 'MX/JALISCO/GDL']
-        }
+            filters = {
+                'Location': ['MX/CDMX/CDMX', 'MX/JALISCO/GDL']
+            }
 
-        results = analyzer.run_complete_analysis(filters=filters, visualize=False)
+            results = analyzer.run_complete_analysis(filters=filters, visualize=False)
 
-        st.session_state.analyzer = analyzer
-        st.session_state.results = results
-        st.session_state.filters = filters
-
-    st.success("Análisis completado.")
+            st.session_state.analyzer = analyzer
+            st.session_state.results = results
+            st.session_state.filters = filters
+            st.success("✅ Análisis completado.")
+            
+        except ValueError as ve:
+            st.error(f"❌ Error de validación: {str(ve)}")
+            st.warning("Los filtros de este ejemplo pueden haber dejado muy pocos datos.")
+            st.session_state.results = None
+            st.session_state.analyzer = None
+        except Exception as e:
+            st.error(f"❌ Error en el análisis: {str(e)}")
+            st.session_state.results = None
+            st.session_state.analyzer = None
 
 
 def run_example_3():
@@ -330,22 +350,32 @@ def run_example_3():
     st.info("Filtros aplicados: México + Studio Engineering + Seniority Senior.")
 
     with st.spinner("Cargando datos y ejecutando análisis..."):
-        analyzer = MarkovChainAnalyzer(database_type="NA")
-        analyzer.load_data()
+        try:
+            analyzer = MarkovChainAnalyzer(database_type="NA")
+            analyzer.load_data()
 
-        filters = {
-            'Location': ['MX/CDMX/CDMX', 'MX/JALISCO/GDL'],
-            'Studio': ['Engineering'],
-            'Seniority': ['Sr Level 1', 'Sr Level 2', 'Sr Level 3']
-        }
+            filters = {
+                'Location': ['MX/CDMX/CDMX', 'MX/JALISCO/GDL'],
+                'Studio': ['Engineering'],
+                'Seniority': ['Sr Level 1', 'Sr Level 2', 'Sr Level 3']
+            }
 
-        results = analyzer.run_complete_analysis(filters=filters, visualize=False)
+            results = analyzer.run_complete_analysis(filters=filters, visualize=False)
 
-        st.session_state.analyzer = analyzer
-        st.session_state.results = results
-        st.session_state.filters = filters
-
-    st.success("Análisis completado.")
+            st.session_state.analyzer = analyzer
+            st.session_state.results = results
+            st.session_state.filters = filters
+            st.success("✅ Análisis completado.")
+            
+        except ValueError as ve:
+            st.error(f"❌ Error de validación: {str(ve)}")
+            st.warning("Los filtros de este ejemplo pueden haber dejado muy pocos datos.")
+            st.session_state.results = None
+            st.session_state.analyzer = None
+        except Exception as e:
+            st.error(f"❌ Error en el análisis: {str(e)}")
+            st.session_state.results = None
+            st.session_state.analyzer = None
 
 
 def run_example_4():
@@ -354,14 +384,24 @@ def run_example_4():
     st.info("Se analizan únicamente empleados que son líderes.")
 
     with st.spinner("Cargando datos y ejecutando análisis..."):
-        analyzer = MarkovChainAnalyzer(database_type="L")
-        analyzer.load_data()
-        results = analyzer.run_complete_analysis(filters=None, visualize=False)
+        try:
+            analyzer = MarkovChainAnalyzer(database_type="L")
+            analyzer.load_data()
+            
+            if len(analyzer.data) < 2:
+                st.error("❌ No hay suficientes datos de líderes para realizar el análisis.")
+                return
+                
+            results = analyzer.run_complete_analysis(filters=None, visualize=False)
 
-        st.session_state.analyzer = analyzer
-        st.session_state.results = results
-
-    st.success("Análisis completado.")
+            st.session_state.analyzer = analyzer
+            st.session_state.results = results
+            st.success("✅ Análisis completado.")
+            
+        except Exception as e:
+            st.error(f"❌ Error en el análisis: {str(e)}")
+            st.session_state.results = None
+            st.session_state.analyzer = None
 
 
 def run_example_5():
@@ -424,13 +464,36 @@ def run_example_6():
         analyzer.load_data()
 
     st.session_state.analyzer = analyzer
+    st.session_state.results = None  # No hay resultados porque no se ejecutó análisis
 
     st.markdown("### Columnas disponibles para filtros personalizados")
-    st.write(analyzer.get_available_columns())
+    
+    # Mostrar las columnas que se pueden filtrar
+    columnas_filtro = ['Location', 'Studio', 'Seniority', 'Position', 'Team Name']
+    
+    for columna in columnas_filtro:
+        with st.expander(f"📊 {columna}"):
+            opciones = analyzer.get_available_options(columna)
+            if opciones:
+                st.write(f"**Opciones disponibles ({len(opciones)}):**")
+                # Mostrar en columnas para mejor visualización
+                n_cols = 3
+                cols = st.columns(n_cols)
+                for idx, opcion in enumerate(opciones):
+                    cols[idx % n_cols].write(f"- {opcion}")
+            else:
+                st.write("No hay opciones disponibles para esta columna")
 
     st.info(
-        "Estas son las columnas que puedes usar para segmentar el análisis "
-        "en la opción de filtros personalizados."
+        "💡 **Cómo usar esta información:**\n\n"
+        "Estas son todas las opciones que puedes usar para segmentar el análisis "
+        "en la opción de **Filtros personalizados**. Por ejemplo, puedes analizar "
+        "solo un Studio específico, una ubicación, o un nivel de Seniority."
+    )
+    
+    st.success(
+        "✅ Para aplicar filtros y ejecutar un análisis, "
+        "ve al menú principal y selecciona **'Filtros personalizados'**"
     )
 
 
@@ -459,9 +522,14 @@ def filter_section():
         )
 
     # Cargar datos base
-    analyzer = MarkovChainAnalyzer(database_type=db_type)
-    analyzer.load_data()
-    st.session_state.analyzer = analyzer
+    # Solo crear nuevo analyzer si no hay resultados previos
+    if 'analyzer' not in st.session_state or st.session_state.results is None:
+        analyzer = MarkovChainAnalyzer(database_type=db_type)
+        analyzer.load_data()
+        st.session_state.analyzer = analyzer
+    else:
+        # Usar el analyzer existente si ya hay resultados
+        analyzer = st.session_state.analyzer
 
     st.markdown("### Definir filtros")
 
@@ -596,6 +664,17 @@ def run_analysis():
                 for column, values in st.session_state.filters.items():
                     analysis_analyzer.filter_by_column(column, values)
 
+            # Validar que haya datos después de filtrar
+            if len(analysis_analyzer.data) < 2:
+                st.error(
+                    f"❌ Los filtros aplicados dejaron solo {len(analysis_analyzer.data)} registro(s). "
+                    f"Se necesitan al menos 2 registros para construir una cadena de Markov."
+                )
+                st.warning("Intenta con filtros menos restrictivos o selecciona más valores.")
+                st.session_state.results = None
+                st.session_state.analyzer = None
+                return
+
             results = analysis_analyzer.run_complete_analysis(
                 filters=None,
                 visualize=False
@@ -603,11 +682,18 @@ def run_analysis():
 
             st.session_state.results = results
             st.session_state.analyzer = analysis_analyzer
-            st.success("Análisis completado correctamente.")
+            st.success("✅ Análisis completado correctamente.")
 
-        except Exception as e:
-            st.error(f"Ocurrió un error durante el análisis: {str(e)}")
+        except ValueError as ve:
+            st.error(f"❌ Error de validación: {str(ve)}")
+            st.warning("Revisa los filtros aplicados e intenta nuevamente.")
             st.session_state.results = None
+            st.session_state.analyzer = None
+        except Exception as e:
+            st.error(f"❌ Ocurrió un error durante el análisis: {str(e)}")
+            st.warning("Si el problema persiste, intenta con otros filtros o vuelve al menú principal.")
+            st.session_state.results = None
+            st.session_state.analyzer = None
 
 
 def display_results():
@@ -621,19 +707,53 @@ def display_results():
 
     results = st.session_state.results
     analyzer = st.session_state.analyzer
+    
+    # Verificar si hubo error en el análisis
+    if 'error' in results:
+        st.error(f"❌ Error en el análisis: {results['error']}")
+        st.info(
+            "**Posibles causas:**\n"
+            "- Los filtros seleccionados son demasiado restrictivos\n"
+            "- No hay suficientes datos para el análisis\n"
+            "- Los datos no tienen transiciones válidas\n\n"
+            "**Soluciones:**\n"
+            "- Intenta con filtros menos restrictivos\n"
+            "- Selecciona un grupo más grande de datos\n"
+            "- Prueba con otro de los ejemplos predefinidos"
+        )
+        return
 
-    st.header("Resultados del análisis")
+    st.header("📈 Resultados del análisis")
 
-    # Métricas principales
+    # Métricas principales más grandes y visibles
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Número de estados", len(results['states']))
+        st.metric(
+            "Niveles de engagement detectados",
+            len(results['states']),
+            help="Diferentes niveles de engagement encontrados en tus datos"
+        )
     with col2:
-        st.metric("Cadena ergódica", "Sí" if results['ergodic'] else "No")
+        ergodic_label = "✅ Estable" if results['ergodic'] else "⚠️ Inestable"
+        ergodic_help = (
+            "Sistema estable: converge a un equilibrio predecible" if results['ergodic']
+            else "Sistema inestable: el comportamiento depende del punto inicial"
+        )
+        st.metric(
+            "Comportamiento del sistema",
+            ergodic_label,
+            help=ergodic_help
+        )
     with col3:
-        st.metric("Registros analizados", len(analyzer.data))
+        st.metric(
+            "Empleados analizados",
+            len(analyzer.data),
+            help="Número de registros incluidos en este análisis"
+        )
 
-    st.subheader("Matriz de transición")
+    st.markdown("---")
+    st.subheader("🔄 Matriz de transición: Probabilidades de cambio día a día")
+    st.caption("Esta matriz muestra cómo cambia el engagement de un día para otro. Lee las filas como 'hoy' y las columnas como 'mañana'.")
 
     # Visualización + explicación lado a lado
     col_vis, col_exp = st.columns([2, 1])
@@ -645,11 +765,11 @@ def display_results():
         n_states = len(results['states'])
         ax.set_xticks(np.arange(n_states))
         ax.set_yticks(np.arange(n_states))
-        ax.set_xticklabels(results['states'])
-        ax.set_yticklabels(results['states'])
-        ax.set_xlabel('Estado en el siguiente periodo')
-        ax.set_ylabel('Estado en el periodo actual')
-        ax.set_title('Matriz de transición de engagement')
+        ax.set_xticklabels(results['states'], fontsize=11, color='#333333')
+        ax.set_yticklabels(results['states'], fontsize=11, color='#333333')
+        ax.set_xlabel('Nivel de engagement el día siguiente', fontsize=12, fontweight='600', color='#333333')
+        ax.set_ylabel('Nivel de engagement hoy', fontsize=12, fontweight='600', color='#333333')
+        ax.set_title('¿Cómo cambia el engagement día a día?', fontsize=14, fontweight='bold', color='#333333', pad=15)
 
         for i in range(n_states):
             for j in range(n_states):
@@ -658,34 +778,45 @@ def display_results():
                     f"{results['transition_matrix'][i, j]:.2f}",
                     ha='center',
                     va='center',
-                    color='black'
+                    color='#000000',
+                    fontsize=10,
+                    fontweight='600'
                 )
 
-        plt.colorbar(im, ax=ax, label='Probabilidad de transición')
+        cbar = plt.colorbar(im, ax=ax, label='Probabilidad')
+        cbar.ax.tick_params(labelsize=10, colors='#333333')
+        cbar.set_label('Probabilidad', fontsize=11, color='#333333', fontweight='600')
         plt.tight_layout()
         st.pyplot(fig)
 
     with col_exp:
         st.markdown(
             """
-            **Cómo leer esta matriz**
+            **📖 Cómo interpretar**
 
-            - Cada **fila** representa un nivel de engagement **actual**.
-            - Cada **columna** representa el nivel de engagement en el **siguiente periodo** (siguiente medición).
-            - El color y el número indican la **probabilidad** de moverse de un nivel a otro.
+            - Cada **fila**: Nivel de engagement hoy
+            - Cada **columna**: Nivel de engagement mañana
+            - **Números**: % de probabilidad de cambio
 
-            Ejemplo de lectura:
-            - Si en la fila "3" y columna "4" aparece 0.20, significa que:
-              > Cuando una persona está en el nivel 3 hoy, tiene 20% de probabilidad de estar en el nivel 4 en la siguiente medición.
+            **Ejemplo práctico:**
 
-            Uso para negocio:
-            - Nos permite ver si los equipos **tienden a mejorar, empeorar o mantenerse** en su nivel de engagement.
+            Si ves 0.30 en la fila "3" y columna "4":
+
+            → Las personas en nivel 3 hoy tienen 30% de probabilidad de subir a nivel 4 mañana.
+
+            **💼 Para tu negocio:**
+
+            - Diagonal fuerte = Estabilidad (se mantienen)
+            - Arriba de diagonal = Mejora (suben de nivel)
+            - Abajo de diagonal = Deterioro (bajan de nivel)
             """
         )
 
     # Distribución estacionaria y tiempos de recurrencia
     if results['ergodic']:
-        st.subheader("Distribución estacionaria (largo plazo)")
+        st.markdown("---")
+        st.subheader("📊 Proyección de engagement a largo plazo")
+        st.caption("Si las condiciones actuales se mantienen, esta es la distribución esperada de tu equipo en el futuro.")
 
         col_table, col_explain = st.columns([2, 1])
 
@@ -698,140 +829,380 @@ def display_results():
 
             # Gráfica de barras
             fig2, ax2 = plt.subplots(figsize=(10, 5))
-            ax2.bar(results['states'], results['stationary_distribution'], color=PRIMARY_GREEN)
-            ax2.set_xlabel('Nivel de engagement')
-            ax2.set_ylabel('Probabilidad en el largo plazo')
-            ax2.set_title('Distribución estacionaria de niveles de engagement')
-            ax2.grid(axis='y', alpha=0.3)
+            ax2.bar(results['states'], results['stationary_distribution'], color=PRIMARY_GREEN, edgecolor='#333333', linewidth=1.5)
+            ax2.set_xlabel('Nivel de engagement', fontsize=12, fontweight='600', color='#333333')
+            ax2.set_ylabel('% de empleados esperado', fontsize=12, fontweight='600', color='#333333')
+            ax2.set_title('¿Dónde estará mi equipo en el futuro?', fontsize=14, fontweight='bold', color='#333333', pad=15)
+            ax2.tick_params(axis='both', labelsize=11, colors='#333333')
+            ax2.grid(axis='y', alpha=0.3, linestyle='--')
+
+            # Agregar valores encima de las barras
+            for i, (state, prob) in enumerate(zip(results['states'], results['stationary_distribution'])):
+                ax2.text(i, prob + 0.01, f'{prob:.1%}', ha='center', va='bottom', fontsize=10, fontweight='bold', color='#333333')
+
             plt.tight_layout()
             st.pyplot(fig2)
 
         with col_explain:
             st.markdown(
                 """
-                **Qué significa la distribución estacionaria**
+                **💡 ¿Qué estás viendo?**
 
-                - Muestra la **proporción de personas** que, en el largo plazo, esperamos que estén en cada nivel de engagement.
-                - No es un snapshot de hoy, sino una visión de **equilibrio** si las probabilidades de transición se mantienen.
+                Esta gráfica muestra **dónde estará tu equipo** si las condiciones actuales se mantienen.
 
-                Ejemplo:
-                - Si el estado 4 tiene probabilidad 0.40, significa que, a largo plazo, se espera que **40%** de las personas
-                  estén en nivel de engagement 4.
+                **Ejemplo:**
 
-                Uso para negocio:
-                - Ayuda a responder: *“Si no cambiamos nada, ¿a qué distribución de engagement convergerá la organización?”*.
-                - Permite comparar segmentos (por país, studio, seniority) y ver **quiénes tienden a niveles más altos o más bajos**.
+                Si el nivel 4 muestra 35%:
+
+                → En el futuro, esperamos que 35 de cada 100 personas estén en nivel 4.
+
+                **🎯 Decisiones de negocio:**
+
+                ✓ Identificar si el futuro es favorable o preocupante
+
+                ✓ Comparar diferentes equipos/países/studios
+
+                ✓ Justificar inversiones en mejora de clima
+
+                ✓ Establecer metas realistas basadas en datos
                 """
             )
 
-        st.subheader("Tiempos medios de recurrencia")
+        st.markdown("---")
+        st.subheader("⏱️ Frecuencia de visita a cada nivel")
+        st.caption("¿Cada cuántos días, en promedio, los empleados vuelven a experimentar cada nivel de engagement?")
 
         col_times, col_times_exp = st.columns([2, 1])
 
         with col_times:
             df_times = pd.DataFrame({
-                'Estado': results['states'],
-                'Tiempo medio (pasos)': results['mean_recurrence_times']
+                'Nivel': results['states'],
+                'Cada cuántos días se visita': results['mean_recurrence_times']
             })
-            st.table(df_times.style.format({'Tiempo medio (pasos)': '{:.2f}'}))
+            st.table(df_times.style.format({'Cada cuántos días se visita': '{:.1f} días'}))
 
         with col_times_exp:
             st.markdown(
                 """
-                **Qué es el tiempo medio de recurrencia**
+                **💡 Interpretación simple**
 
-                - Para cada nivel de engagement, indica **cada cuántos periodos, en promedio, se vuelve a visitar ese nivel**.
-                - Un número **bajo** significa que el nivel se visita **con frecuencia**.
-                - Un número **alto** significa que el nivel es más **raro** o que se tarda más en regresar.
+                **Número bajo** (ej: 3 días)
 
-                Uso para negocio:
-                - Permite ver qué niveles de engagement son más **estables** o frecuentes.
-                - Por ejemplo, si el nivel 2 tiene tiempo medio 2.5, en promedio se regresa a ese nivel cada 2.5 mediciones.
+                → Nivel muy común, se visita frecuentemente
+
+                **Número alto** (ej: 25 días)
+
+                → Nivel raro, se visita ocasionalmente
+
+                **🎯 Para tu negocio:**
+
+                ✓ Niveles con frecuencia baja = Tu "zona habitual"
+
+                ✓ Niveles con frecuencia alta = Estados poco comunes
+
+                ✓ Útil para entender la "normalidad" de tu equipo
                 """
             )
     else:
+        st.markdown("---")
         st.warning(
-            "La cadena no es ergódica. No se puede calcular una distribución estacionaria bien definida "
-            "ni tiempos de recurrencia consistentes para todos los estados."
+            "⚠️ **Sistema Inestable:** No se puede calcular una proyección única de largo plazo porque el sistema no converge a un equilibrio."
         )
 
-    # Simulación de trayectoria
-    st.subheader("Simulación de trayectoria de engagement")
+        # Explicación detallada del problema
+        with st.expander("🔍 ¿Por qué no es ergódica? (Click para detalles)"):
+            st.markdown(
+                f"""
+                **🔍 Diagnóstico técnico:**
 
-    if not hasattr(analyzer, 'state_to_idx') or analyzer.state_to_idx is None:
-        st.warning("No se puede simular porque el análisis no tiene el mapeo de estados configurado.")
-        return
+                - **Conectividad completa:** {'✅ Sí' if results['irreducible'] else '❌ No - Hay niveles aislados'}
+                - **Sin ciclos forzados:** {'✅ Sí' if results['aperiodic'] else '❌ No - Hay patrones cíclicos'}
 
-    available_states = sorted([float(k) for k in analyzer.state_to_idx.keys()])
+                Para ser un sistema estable (ergódico), necesita ambas condiciones.
 
-    if len(available_states) == 0:
-        st.warning("No hay estados disponibles para simular.")
-        return
+                ---
 
-    col_controls, col_plot = st.columns([1, 2])
+                **🔎 ¿Qué está pasando?**
 
-    with col_controls:
-        initial_state = st.selectbox(
-            "Estado inicial de engagement",
-            options=available_states,
-            index=len(available_states) // 2,
-            format_func=lambda x: f"{x:.1f}"
-        )
+                {'**Niveles aislados:** Algunos niveles de engagement no se conectan con otros. Puede haber "trampas" de las que es difícil salir.' if not results['irreducible'] else ''}
 
-        n_steps = st.slider(
-            "Número de periodos a simular",
-            min_value=10,
-            max_value=200,
-            value=60,
-            step=10
-        )
+                {'**Patrones cíclicos:** El engagement sigue ciclos regulares en lugar de poder cambiar libremente en cualquier momento.' if not results['aperiodic'] else ''}
 
-        run_simulation = st.button("Simular trayectoria", type="primary", use_container_width=True)
+                ---
 
-    if run_simulation:
-        try:
-            simulated = analyzer.simulate(float(initial_state), n_steps=n_steps)
+                **💼 Impacto en el negocio:**
 
-            col_plot_vis, col_plot_exp = st.columns([2, 1])
+                ⚠️ No hay un "futuro único" predecible - el resultado final depende mucho de dónde empiezas
 
-            with col_plot_vis:
-                fig3, ax3 = plt.subplots(figsize=(12, 6))
-                ax3.plot(simulated, marker='o', linewidth=2, markersize=4)
-                ax3.set_xlabel('Periodo')
-                ax3.set_ylabel('Nivel de engagement')
-                ax3.set_title(f'Trayectoria simulada de engagement (estado inicial: {initial_state})')
-                ax3.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig3)
+                ⚠️ Puede haber niveles de los que es muy difícil salir una vez que llegas ahí
 
-            with col_plot_exp:
+                ⚠️ Las intervenciones de HR tendrán efectos diferentes según el nivel actual del equipo
+
+                **💡 Recomendación:**
+
+                Analiza los filtros aplicados. Grupos muy pequeños o muy homogéneos pueden generar este comportamiento.
+                """
+            )
+
+        # Mostrar tiempos de recurrencia estimados por simulación
+        if 'mean_recurrence_times' in results and results.get('recurrence_method') == 'simulation':
+            st.markdown("---")
+            st.subheader("⏱️ Frecuencia de visita a cada nivel (estimación)")
+            st.caption("Valores estimados mediante simulación. Indican qué tan común es cada nivel de engagement.")
+
+            col_times, col_times_exp = st.columns([2, 1])
+
+            with col_times:
+                # Preparar datos para la tabla
+                recurrence_data = []
+                for state, time in zip(results['states'], results['mean_recurrence_times']):
+                    if np.isinf(time):
+                        recurrence_data.append({'Nivel': state, 'Cada cuántos días se visita': '∞ (no alcanzable)'})
+                    else:
+                        recurrence_data.append({'Nivel': state, 'Cada cuántos días se visita': f"{time:.1f} días"})
+
+                df_times = pd.DataFrame(recurrence_data)
+                st.table(df_times)
+
+                st.info(
+                    "ℹ️ **Nota:** Valores estimados mediante simulación de 50,000 días. "
+                    "Proporcionan una buena aproximación del comportamiento real."
+                )
+
+            with col_times_exp:
                 st.markdown(
                     """
-                    **Cómo interpretar la trayectoria simulada**
+                    **💡 Interpretación**
 
-                    - Cada punto representa el **nivel de engagement de una persona o grupo** en cada periodo.
-                    - La simulación usa la matriz de transición estimada para ir moviéndose de un nivel a otro.
-                    - No es un pronóstico exacto, sino un **escenario probable** si las probabilidades se mantienen.
+                    **Número bajo** (ej: 5 días)
 
-                    Uso para negocio:
-                    - Permite ilustrar cómo puede evolucionar el engagement de un equipo a lo largo del tiempo.
-                    - Útil para explicarle a líderes de negocio el concepto de “camino” de engagement.
+                    → Nivel frecuente en tu equipo
+
+                    **Número alto** (ej: 30 días)
+
+                    → Nivel poco común
+
+                    **∞ (infinito)**
+
+                    → Nivel prácticamente inalcanzable o "trampa" de la que no se sale
+
+                    **⚠️ Importante:**
+
+                    Al no ser ergódica, el comportamiento depende mucho del punto de partida. Estos son promedios estimados.
+
+                    **🎯 Para tu negocio:**
+
+                    ✓ Detecta niveles "trampa" (difíciles de abandonar)
+
+                    ✓ Identifica niveles inaccesibles
+
+                    ✓ Entiende la dinámica real de tu equipo
                     """
                 )
 
-                st.markdown("**Resumen de la simulación:**")
+    # ================== SECCIÓN DE SIMULACIÓN PROTEGIDA (V3.0 - ULTRA ROBUSTA) ==================
+    try:
+        # Validación inicial del analyzer
+        if (not hasattr(analyzer, 'state_to_idx') or 
+            analyzer.state_to_idx is None or 
+            len(analyzer.state_to_idx) == 0):
+            st.info(
+                "ℹ️ **Primero ejecuta un análisis** - Selecciona uno de los ejemplos del menú principal o crea un análisis personalizado con filtros."
+            )
+            return
+        
+        st.markdown("---")
+        st.subheader("🎲 Simulador: ¿Cómo evolucionará el engagement?")
+        st.caption("Genera una trayectoria probable del engagement basada en los patrones históricos de tu equipo.")
+        
+        # Nota especial si no es ergódica
+        if not results['ergodic']:
+            st.info(
+                "ℹ️ **Nota:** Puedes simular de todos modos, pero el resultado dependerá mucho del nivel inicial que elijas."
+            )
+
+        # Obtener estados disponibles (SIN return si falla)
+        available_states = []
+        try:
+            available_states = sorted([float(k) for k in analyzer.state_to_idx.keys()])
+        except Exception:
+            pass
+        
+        if len(available_states) == 0:
+            st.warning("⚠️ No hay estados disponibles para simular.")
+            st.info("Intenta ejecutar el análisis nuevamente o con filtros diferentes.")
+            return
+
+        # Inicializar session_state para persistir resultados
+        if 'simulation_result' not in st.session_state:
+            st.session_state.simulation_result = None
+        if 'simulation_params' not in st.session_state:
+            st.session_state.simulation_params = None
+        
+        # ============ CONTROLES - SIEMPRE VISIBLES ============
+        col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 2, 1])
+        
+        with col_ctrl1:
+            initial_state = st.selectbox(
+                "Estado inicial de engagement",
+                options=available_states,
+                index=len(available_states) // 2,
+                format_func=lambda x: f"{x:.1f}",
+                key="sim_initial_state"
+            )
+
+        with col_ctrl2:
+            n_steps = st.slider(
+                "Número de días a simular",
+                min_value=10,
+                max_value=200,
+                value=60,
+                step=10,
+                key="sim_n_steps"
+            )
+        
+        with col_ctrl3:
+            st.write("")  # Espaciado
+            st.write("")  # Espaciado
+            run_simulation = st.button("🚀 Simular", type="primary", use_container_width=True, key="sim_button")
+        
+        # ============ EJECUCIÓN - SOLO CUANDO SE PRESIONA BOTÓN ============
+        if run_simulation:
+            # Limpiar resultado anterior
+            st.session_state.simulation_result = None
+            st.session_state.simulation_params = None
+            
+            with st.spinner("Ejecutando simulación..."):
+                simulation_error = None
+                simulated = None
+                
+                try:
+                    # Obtener índice y probabilidades
+                    current_idx = analyzer.state_to_idx[float(initial_state)]
+                    row_probs = analyzer.transition_matrix[current_idx]
+                    
+                    # Validar que hay transiciones
+                    if row_probs.sum() == 0:
+                        simulation_error = {
+                            'type': 'no_transitions',
+                            'state': initial_state
+                        }
+                    else:
+                        # Mostrar advertencia si es casi absorbente (pero simular de todos modos)
+                        if row_probs[current_idx] > 0.95:
+                            st.warning(
+                                f"⚠️ El estado {initial_state} es casi absorbente "
+                                f"(probabilidad {row_probs[current_idx]:.2%} de quedarse). "
+                                "La simulación probablemente se quedará mayormente en este nivel."
+                            )
+                        
+                        # Ejecutar simulación
+                        simulated = analyzer.simulate(float(initial_state), n_steps=n_steps)
+                        
+                        # Guardar en session_state
+                        st.session_state.simulation_result = simulated
+                        st.session_state.simulation_params = {
+                            'initial_state': initial_state,
+                            'n_steps': n_steps
+                        }
+                
+                except Exception as e:
+                    simulation_error = {
+                        'type': 'execution_error',
+                        'message': str(e),
+                        'state': initial_state
+                    }
+                
+                # Mostrar errores si los hay
+                if simulation_error:
+                    if simulation_error['type'] == 'no_transitions':
+                        st.error(
+                            f"⚠️ El estado {simulation_error['state']} no tiene transiciones salientes "
+                            f"en los datos filtrados. La simulación se quedaría congelada."
+                        )
+                        st.info("💡 **Solución:** Selecciona otro estado inicial o usa filtros menos restrictivos.")
+                    else:
+                        st.error(f"❌ Error durante la simulación: {simulation_error['message']}")
+                        with st.expander("Ver detalles del error"):
+                            st.write(f"**Estados disponibles:** {available_states}")
+                            st.write(f"**Estado inicial:** {simulation_error['state']}")
+                            st.write(f"**Pasos:** {n_steps}")
+                            if 'message' in simulation_error:
+                                st.code(simulation_error['message'])
+                        st.info("💡 Intenta con un estado inicial diferente.")
+        
+        # ============ MOSTRAR RESULTADOS SI EXISTEN ============
+        if st.session_state.simulation_result is not None:
+            simulated = st.session_state.simulation_result
+            params = st.session_state.simulation_params
+            
+            st.success(f"✅ Simulación completada - {len(simulated)} estados generados")
+            st.markdown("---")
+            
+            # Gráfica
+            fig3, ax3 = plt.subplots(figsize=(14, 6))
+            ax3.plot(simulated, marker='o', linewidth=2.5, markersize=5, color=PRIMARY_GREEN, markeredgecolor='#333333', markeredgewidth=1)
+            ax3.set_xlabel('Día', fontsize=13, fontweight='600', color='#333333')
+            ax3.set_ylabel('Nivel de engagement', fontsize=13, fontweight='600', color='#333333')
+            ax3.set_title(
+                f'Evolución simulada del engagement - Iniciando en nivel {params["initial_state"]}',
+                fontsize=15,
+                fontweight='bold',
+                color='#333333',
+                pad=20
+            )
+            ax3.tick_params(axis='both', labelsize=11, colors='#333333')
+            ax3.grid(True, alpha=0.3, linestyle='--')
+            ax3.set_facecolor('#FAFAFA')
+            plt.tight_layout()
+            st.pyplot(fig3)
+            plt.close(fig3)
+            
+            # Información y estadísticas
+            col_info1, col_info2 = st.columns([1, 1])
+            
+            with col_info1:
+                st.markdown(
+                    """
+                    **💡 ¿Qué estás viendo?**
+
+                    Esta es una **trayectoria posible** del engagement basada en tus datos históricos.
+
+                    **No es una predicción exacta**, sino un escenario probable que muestra cómo puede fluctuar el engagement día a día.
+
+                    **🎯 Útil para:**
+
+                    ✓ Visualizar la volatilidad del engagement
+
+                    ✓ Entender rangos típicos de variación
+
+                    ✓ Comunicar patrones a stakeholders
+
+                    ✓ Planificar intervenciones
+                    """
+                )
+
+            with col_info2:
+                st.markdown("**📊 Estadísticas de la simulación**")
                 unique_visited = sorted(set(simulated))
-                st.write(f"- Estados visitados: {unique_visited}")
-                st.write(f"- Estado final: {simulated[-1]}")
-                st.write(f"- Tiempo en cada estado:")
+                st.write(f"**Niveles visitados:** {', '.join(map(str, unique_visited))}")
+                st.write(f"**Nivel final:** {simulated[-1]}")
+                st.write(f"")
+                st.write(f"**Tiempo en cada nivel:**")
                 for state in unique_visited:
                     count = simulated.count(state)
                     percentage = (count / len(simulated)) * 100
-                    st.write(f"  - Estado {state}: {count} periodos ({percentage:.1f}%)")
+                    st.write(f"• Nivel {state}: **{percentage:.0f}%** ({count} días)")
+    except Exception as e:
+        st.error(f"❌ Error al preparar la sección de simulación: {e}")
+        with st.expander("Ver detalles técnicos"):
+            import traceback
+            st.code(traceback.format_exc())
+        st.info(
+            "💡 Es posible que el subconjunto de datos seleccionado genere una cadena muy "
+            "degenerada. Prueba relajando los filtros o eligiendo otro ejemplo."
+        )
 
-        except Exception as e:
-            st.error(f"Ocurrió un error durante la simulación: {str(e)}")
-            st.info(f"Estados disponibles: {available_states}")
 
 
 def export_results():
@@ -854,10 +1225,12 @@ def export_results():
             'Probabilidad': results['stationary_distribution']
         })
 
-    export_data['mean_recurrence_times'] = pd.DataFrame({
-        'Estado': results['states'],
-        'Tiempo medio (pasos)': results['mean_recurrence_times']
-    })
+    # Solo incluir mean_recurrence_times si están disponibles (cuando es ergódica)
+    if 'mean_recurrence_times' in results:
+        export_data['mean_recurrence_times'] = pd.DataFrame({
+            'Estado': results['states'],
+            'Tiempo medio (pasos)': results['mean_recurrence_times']
+        })
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
